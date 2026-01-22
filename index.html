@@ -37,7 +37,7 @@
       Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
     </canvas>
   </div>
-
+  <button id="btnPause">Pause</button>
   <script src="stats.js"></script>
   <script>
 
@@ -63,6 +63,22 @@
                                        window.setTimeout(callback, 1000 / 60);
                                      }
     }
+    //pause button using google gemini
+  var btnPause = document.getElementById("btnPause");
+  var isPaused = false;
+
+ btnPause.addEventListener("click", function() {
+    isPaused = !isPaused; // switch between true and false
+
+    //updated button text when clicked
+    if (isPaused) {
+      btnPause.innerText = "Resume";
+    }
+    else {
+      btnPause.innerText = "Pause";
+      invalidate();
+    }
+  });
 
     //-------------------------------------------------------------------------
     // game constants
@@ -213,6 +229,9 @@
     }
 
     function keydown(ev) {
+      if (isPaused) {
+        return;
+      }
       var handled = false;
       if (playing) {
         switch(ev.keyCode) {
@@ -263,6 +282,7 @@
     }
 
     function update(idt) {
+      if (isPaused) return; //if paused, do nothing 
       if (playing) {
         if (vscore < score)
           setVisualScore(vscore + 1);
@@ -377,6 +397,14 @@
       drawNext();
       drawScore();
       drawRows();
+      if (isPaused) {
+          ctx.fillStyle = "rgba(0,0,0,0.5)"; // Semi-transparent black
+          ctx.fillRect(0, 0, canvas.width, canvas.height); // Cover canvas
+          ctx.fillStyle = "white";
+          ctx.font = "20px Helvetica";
+          ctx.textAlign = "center";
+          ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+      }
       ctx.restore();
     }
 
@@ -442,24 +470,6 @@
     //-------------------------------------------------------------------------
 
     run();
-//i will move the section code into the middle of the code after i'm finished with it
-// will need to make the play button and anything to do with it play2
-// 
   </script>
-<section> 
-  <button id="btnPause">⏸️</button>
-  <button id="btnPlay">▶️</button>
-</section>
-<script>
-  const btnPause = getElementById("btnPause");
-  const btnPlay2 = getElementById("btnPlay");
-
-  btnPause.addEventListener("click", () => {
-
-  })
-  btnPlay.addEventListener("click", () => {
-    
-  })
-</script>
 </body>
 </html>
