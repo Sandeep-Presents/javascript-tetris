@@ -14,13 +14,43 @@
     #score    { color: red; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
-    @media screen and (min-width:   0px) and (min-height:   0px)  { #tetris { font-size: 0.75em; width: 250px; } #menu { width: 100px; height: 200px; } #upcoming { width:  50px; height:  50px; } #canvas { width: 100px; height: 200px; } } /* 10px chunks */
-    @media screen and (min-width: 400px) and (min-height: 400px)  { #tetris { font-size: 1.00em; width: 350px; } #menu { width: 150px; height: 300px; } #upcoming { width:  75px; height:  75px; } #canvas { width: 150px; height: 300px; } } /* 15px chunks */
-    @media screen and (min-width: 500px) and (min-height: 500px)  { #tetris { font-size: 1.25em; width: 450px; } #menu { width: 200px; height: 400px; } #upcoming { width: 100px; height: 100px; } #canvas { width: 200px; height: 400px; } } /* 20px chunks */
-    @media screen and (min-width: 600px) and (min-height: 600px)  { #tetris { font-size: 1.50em; width: 550px; } #menu { width: 250px; height: 500px; } #upcoming { width: 125px; height: 125px; } #canvas { width: 250px; height: 500px; } } /* 25px chunks */
-    @media screen and (min-width: 700px) and (min-height: 700px)  { #tetris { font-size: 1.75em; width: 650px; } #menu { width: 300px; height: 600px; } #upcoming { width: 150px; height: 150px; } #canvas { width: 300px; height: 600px; } } /* 30px chunks */
-    @media screen and (min-width: 800px) and (min-height: 800px)  { #tetris { font-size: 2.00em; width: 750px; } #menu { width: 350px; height: 700px; } #upcoming { width: 175px; height: 175px; } #canvas { width: 350px; height: 700px; } } /* 35px chunks */
-    @media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 850px; } #menu { width: 400px; height: 800px; } #upcoming { width: 200px; height: 200px; } #canvas { width: 400px; height: 800px; } } /* 40px chunks */
+    
+    /* Level Panel Styles */
+    #levelPanel { margin-top: 1em; padding: 0.5em; border-top: 2px solid #ccc; }
+    #levelDisplay { font-size: 1.2em; font-weight: bold; color: #2c3e50; margin: 0.5em 0; text-align: center; }
+    #levelDisplay span { color: #e74c3c; font-size: 1.3em; }
+    #progressContainer { width: 100%; height: 12px; background-color: #ecf0f1; border-radius: 6px; overflow: hidden; margin: 0.5em 0; border: 1px solid #bdc3c7; }
+    #progressBar { height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.3s ease; width: 0%; }
+    #progressText { font-size: 0.85em; color: #7f8c8d; margin: 0.5em 0; text-align: center; }
+    #progressText span { color: #e67e22; font-weight: bold; }
+    
+    /* Level Up Notification */
+    #levelUpNotification {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 1.5em 2.5em;
+      border-radius: 15px;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 0 30px rgba(231, 76, 60, 0.6);
+      border: 3px solid #e74c3c;
+    }
+    #levelUpNotification p { margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    
+    @media screen and (min-width:   0px) and (min-height:   0px)  { #tetris { font-size: 0.75em; width: 280px; } #menu { width: 120px; height: 220px; } #upcoming { width:  50px; height:  50px; } #canvas { width: 100px; height: 200px; } #levelUpNotification { font-size: 0.8em; padding: 1em 1.5em; } } /* 10px chunks */
+    @media screen and (min-width: 400px) and (min-height: 400px)  { #tetris { font-size: 1.00em; width: 400px; } #menu { width: 180px; height: 320px; } #upcoming { width:  75px; height:  75px; } #canvas { width: 150px; height: 300px; } #levelUpNotification { font-size: 1em; padding: 1.2em 2em; } } /* 15px chunks */
+    @media screen and (min-width: 500px) and (min-height: 500px)  { #tetris { font-size: 1.25em; width: 500px; } #menu { width: 230px; height: 420px; } #upcoming { width: 100px; height: 100px; } #canvas { width: 200px; height: 400px; } #levelUpNotification { font-size: 1.2em; padding: 1.3em 2.2em; } } /* 20px chunks */
+    @media screen and (min-width: 600px) and (min-height: 600px)  { #tetris { font-size: 1.50em; width: 600px; } #menu { width: 280px; height: 520px; } #upcoming { width: 125px; height: 125px; } #canvas { width: 250px; height: 500px; } #levelUpNotification { font-size: 1.4em; padding: 1.4em 2.3em; } } /* 25px chunks */
+    @media screen and (min-width: 700px) and (min-height: 700px)  { #tetris { font-size: 1.75em; width: 700px; } #menu { width: 330px; height: 620px; } #upcoming { width: 150px; height: 150px; } #canvas { width: 300px; height: 600px; } #levelUpNotification { font-size: 1.5em; padding: 1.5em 2.5em; } } /* 30px chunks */
+    @media screen and (min-width: 800px) and (min-height: 800px)  { #tetris { font-size: 2.00em; width: 800px; } #menu { width: 380px; height: 720px; } #upcoming { width: 175px; height: 175px; } #canvas { width: 350px; height: 700px; } #levelUpNotification { font-size: 1.6em; padding: 1.6em 2.6em; } } /* 35px chunks */
+    @media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 900px; } #menu { width: 430px; height: 820px; } #upcoming { width: 200px; height: 200px; } #canvas { width: 400px; height: 800px; } #levelUpNotification { font-size: 1.8em; padding: 1.8em 2.8em; } } /* 40px chunks */
   </style>
 </head>
 
@@ -32,10 +62,20 @@
       <p><canvas id="upcoming"></canvas></p>
       <p>score <span id="score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
+      <div id="levelPanel">
+        <p id="levelDisplay">等级：<span id="level">1</span></p>
+        <div id="progressContainer">
+          <div id="progressBar"></div>
+        </div>
+        <p id="progressText">距离下一级还需消除 <span id="rowsToNext">10</span> 行</p>
+      </div>
     </div>
     <canvas id="canvas">
       Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
     </canvas>
+    <div id="levelUpNotification">
+      <p id="levelUpText">等级提升！Lv1→Lv2</p>
+    </div>
   </div>
 
   <script src="stats.js"></script>
@@ -75,7 +115,6 @@
         ctx     = canvas.getContext('2d'),
         ucanvas = get('upcoming'),
         uctx    = ucanvas.getContext('2d'),
-        speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
@@ -94,7 +133,14 @@
         score,         // the current score
         vscore,        // the currently displayed score (it catches up to score in small chunks - like a spinning slot machine)
         rows,          // number of completed rows in the current game
-        step;          // how long before current piece drops by 1 row
+        step,          // how long before current piece drops by 1 row
+        level,         // current game level (1-10)
+        totalRows,     // total rows cleared in current game (for level calculation)
+        LINES_PER_LEVEL = 10,  // lines needed to level up
+        MAX_LEVEL = 10,        // maximum level cap
+        BASE_SPEED = 800,      // base fall speed at level 1 (ms)
+        SPEED_DECREMENT = 80,  // speed decrease per level (ms)
+        MIN_SPEED = 50;        // minimum fall speed (ms)
 
     //-------------------------------------------------------------------------
     // tetris pieces
@@ -243,7 +289,7 @@
     function addScore(n)            { score = score + n;   }
     function clearScore()           { setScore(0); }
     function clearRows()            { setRows(0); }
-    function setRows(n)             { rows = n; step = Math.max(speed.min, speed.start - (speed.decrement*rows)); invalidateRows(); }
+    function setRows(n)             { rows = n; totalRows = n; updateLevel(); invalidateRows(); invalidateLevel(); }
     function addRows(n)             { setRows(rows + n); }
     function getBlock(x,y)          { return (blocks && blocks[x] ? blocks[x][y] : null); }
     function setBlock(x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); }
@@ -254,12 +300,16 @@
 
     function reset() {
       dt = 0;
+      level = 1;
+      totalRows = 0;
       clearActions();
       clearBlocks();
       clearRows();
       clearScore();
       setCurrentPiece(next);
       setNextPiece();
+      step = calculateFallSpeed();
+      invalidateLevel();
     }
 
     function update(idt) {
@@ -359,6 +409,61 @@
     }
 
     //-------------------------------------------------------------------------
+    // LEVEL SYSTEM
+    //-------------------------------------------------------------------------
+
+    /**
+     * Calculate fall speed based on current level
+     * @returns {number} Fall speed in seconds
+     */
+    function calculateFallSpeed() {
+      var speedMs = Math.max(MIN_SPEED, BASE_SPEED - (level - 1) * SPEED_DECREMENT);
+      return speedMs / 1000; // convert to seconds
+    }
+
+    /**
+     * Update level based on total rows cleared
+     * Triggers level up notification if needed
+     */
+    function updateLevel() {
+      var newLevel = Math.min(MAX_LEVEL, Math.floor(totalRows / LINES_PER_LEVEL) + 1);
+      
+      if (newLevel > level) {
+        var oldLevel = level;
+        level = newLevel;
+        showLevelUpNotification(oldLevel, newLevel);
+        invalidateLevel();
+      }
+      
+      // Update fall speed
+      step = calculateFallSpeed();
+    }
+
+    /**
+     * Get remaining rows needed for next level
+     * @returns {number} Rows needed
+     */
+    function getRowsToNextLevel() {
+      if (level >= MAX_LEVEL) return 0;
+      return LINES_PER_LEVEL - (totalRows % LINES_PER_LEVEL);
+    }
+
+    /**
+     * Show level up notification
+     * @param {number} oldLevel - Previous level
+     * @param {number} newLevel - New level
+     */
+    function showLevelUpNotification(oldLevel, newLevel) {
+      var notification = get('levelUpNotification');
+      html('levelUpText', '等级提升！Lv' + oldLevel + '→Lv' + newLevel);
+      show('levelUpNotification');
+      
+      setTimeout(function() {
+        hide('levelUpNotification');
+      }, 1500);
+    }
+
+    //-------------------------------------------------------------------------
     // RENDERING
     //-------------------------------------------------------------------------
 
@@ -368,6 +473,7 @@
     function invalidateNext()     { invalid.next   = true; }
     function invalidateScore()    { invalid.score  = true; }
     function invalidateRows()     { invalid.rows   = true; }
+    function invalidateLevel()    { invalid.level  = true; }
 
     function draw() {
       ctx.save();
@@ -377,6 +483,7 @@
       drawNext();
       drawScore();
       drawRows();
+      drawLevel();
       ctx.restore();
     }
 
@@ -422,6 +529,24 @@
       if (invalid.rows) {
         html('rows', rows);
         invalid.rows = false;
+      }
+    }
+
+    function drawLevel() {
+      if (invalid.level) {
+        html('level', level);
+        
+        var rowsToNext = getRowsToNextLevel();
+        var progress = level >= MAX_LEVEL ? 100 : ((LINES_PER_LEVEL - rowsToNext) / LINES_PER_LEVEL) * 100;
+        
+        html('rowsToNext', rowsToNext);
+        get('progressBar').style.width = progress + '%';
+        
+        if (level >= MAX_LEVEL) {
+          html('progressText', '已达到最高等级！');
+        }
+        
+        invalid.level = false;
       }
     }
 
