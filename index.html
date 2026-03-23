@@ -12,8 +12,16 @@
     #menu p a { text-decoration: none; color: black; }
     #upcoming { display: block; margin: 0 auto; background-color: #E0E0E0; }
     #score    { color: red; font-weight: bold; vertical-align: middle; }
-    #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
+    #level    { color: green; font-weight: bold; font-size: 1.2em; vertical-align: middle; }
+    #level-progress-container { margin: 0.5em 0; text-align: center; }
+    #level-progress-bar { width: 80%; height: 12px; background-color: #ddd; border-radius: 6px; margin: 0.3em auto; overflow: hidden; }
+    #level-progress-fill { height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 6px; transition: width 0.3s ease; }
+    #level-progress-text { font-size: 0.8em; color: #666; }
+    #level-up-notification { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.8); color: #FFD700; padding: 1em 2em; border-radius: 10px; font-size: 1.5em; font-weight: bold; z-index: 1000; display: none; text-align: center; border: 3px solid #FFD700; animation: pulse 0.5s ease-in-out infinite alternate; }
+    @keyframes pulse { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.05); } }
+    #restart-btn a { background-color: #4CAF50; color: white; padding: 0.5em 1em; border-radius: 5px; text-decoration: none; display: inline-block; }
+    #restart-btn a:hover { background-color: #45a049; }
     @media screen and (min-width:   0px) and (min-height:   0px)  { #tetris { font-size: 0.75em; width: 250px; } #menu { width: 100px; height: 200px; } #upcoming { width:  50px; height:  50px; } #canvas { width: 100px; height: 200px; } } /* 10px chunks */
     @media screen and (min-width: 400px) and (min-height: 400px)  { #tetris { font-size: 1.00em; width: 350px; } #menu { width: 150px; height: 300px; } #upcoming { width:  75px; height:  75px; } #canvas { width: 150px; height: 300px; } } /* 15px chunks */
     @media screen and (min-width: 500px) and (min-height: 500px)  { #tetris { font-size: 1.25em; width: 450px; } #menu { width: 200px; height: 400px; } #upcoming { width: 100px; height: 100px; } #canvas { width: 200px; height: 400px; } } /* 20px chunks */
@@ -31,8 +39,16 @@
       <p id="start"><a href="javascript:play();">Press Space to Play.</a></p>
       <p><canvas id="upcoming"></canvas></p>
       <p>score <span id="score">00000</span></p>
-      <p>rows <span id="rows">0</span></p>
+      <p>level <span id="level">1</span></p>
+      <div id="level-progress-container">
+        <div id="level-progress-bar">
+          <div id="level-progress-fill" style="width: 0%;"></div>
+        </div>
+        <span id="level-progress-text">Next level: 10 rows</span>
+      </div>
+      <p id="restart-btn" style="display: none;"><a href="javascript:restartGame();">Restart Game</a></p>
     </div>
+    <div id="level-up-notification"></div>
     <canvas id="canvas">
       Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
     </canvas>
@@ -75,26 +91,33 @@
         ctx     = canvas.getContext('2d'),
         ucanvas = get('upcoming'),
         uctx    = ucanvas.getContext('2d'),
-        speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
-        nx      = 10, // width of tetris court (in blocks)
-        ny      = 20, // height of tetris court (in blocks)
-        nu      = 5;  // width/height of upcoming preview (in blocks)
+        speed   = { start: 0.6, decrement: 0.005, min: 0.1 },
+        nx      = 10,
+        ny      = 20,
+        nu      = 5,
+        LEVEL_UP_ROWS = 10,
+        MAX_LEVEL = 10,
+        BASE_FALL_SPEED = 0.8,
+        SPEED_DECREMENT = 0.08,
+        MIN_FALL_SPEED = 0.05;
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
     //-------------------------------------------------------------------------
 
-    var dx, dy,        // pixel size of a single tetris block
-        blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
-        actions,       // queue of user actions (inputs)
-        playing,       // true|false - game is in progress
-        dt,            // time since starting this game
-        current,       // the current piece
-        next,          // the next piece
-        score,         // the current score
-        vscore,        // the currently displayed score (it catches up to score in small chunks - like a spinning slot machine)
-        rows,          // number of completed rows in the current game
-        step;          // how long before current piece drops by 1 row
+    var dx, dy,
+        blocks,
+        actions,
+        playing,
+        dt,
+        current,
+        next,
+        score,
+        vscore,
+        rows,
+        step,
+        level,
+        totalRowsForLevel;
 
     //-------------------------------------------------------------------------
     // tetris pieces
@@ -235,15 +258,16 @@
     // GAME LOGIC
     //-------------------------------------------------------------------------
 
-    function play() { hide('start'); reset();          playing = true;  }
-    function lose() { show('start'); setVisualScore(); playing = false; }
+    function play() { hide('start'); hide('restart-btn'); reset(); playing = true; }
+    function lose() { show('start'); show('restart-btn'); setVisualScore(); playing = false; }
+    function restartGame() { hide('start'); hide('restart-btn'); reset(); playing = true; }
 
     function setVisualScore(n)      { vscore = n || score; invalidateScore(); }
     function setScore(n)            { score = n; setVisualScore(n);  }
     function addScore(n)            { score = score + n;   }
     function clearScore()           { setScore(0); }
     function clearRows()            { setRows(0); }
-    function setRows(n)             { rows = n; step = Math.max(speed.min, speed.start - (speed.decrement*rows)); invalidateRows(); }
+    function setRows(n)             { rows = n; step = calculateFallSpeed(level); }
     function addRows(n)             { setRows(rows + n); }
     function getBlock(x,y)          { return (blocks && blocks[x] ? blocks[x][y] : null); }
     function setBlock(x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); }
@@ -252,12 +276,60 @@
     function setCurrentPiece(piece) { current = piece || randomPiece(); invalidate();     }
     function setNextPiece(piece)    { next    = piece || randomPiece(); invalidateNext(); }
 
+    //-------------------------------------------------------------------------
+    // LEVEL SYSTEM FUNCTIONS
+    //-------------------------------------------------------------------------
+
+    function calculateFallSpeed(currentLevel) {
+      var speed = BASE_FALL_SPEED - (currentLevel - 1) * SPEED_DECREMENT;
+      return Math.max(MIN_FALL_SPEED, speed);
+    }
+
+    function getRowsToNextLevel() {
+      return LEVEL_UP_ROWS - (totalRowsForLevel % LEVEL_UP_ROWS);
+    }
+
+    function updateLevel(clearedRows) {
+      var oldLevel = level;
+      totalRowsForLevel += clearedRows;
+      var newLevel = Math.min(MAX_LEVEL, Math.floor(totalRowsForLevel / LEVEL_UP_ROWS) + 1);
+      if (newLevel > oldLevel) {
+        level = newLevel;
+        step = calculateFallSpeed(level);
+        showLevelUpNotification(oldLevel, newLevel);
+      }
+      invalidateLevel();
+      invalidateLevelProgress();
+    }
+
+    function showLevelUpNotification(oldLevel, newLevel) {
+      var notification = get('level-up-notification');
+      notification.innerHTML = 'Level Up!<br>Lv' + oldLevel + ' → Lv' + newLevel;
+      notification.style.display = 'block';
+      setTimeout(function() {
+        notification.style.display = 'none';
+      }, 1500);
+    }
+
+    function setLevel(n) {
+      level = n;
+      totalRowsForLevel = (n - 1) * LEVEL_UP_ROWS;
+      step = calculateFallSpeed(n);
+      invalidateLevel();
+      invalidateLevelProgress();
+    }
+
+    function clearLevel() {
+      setLevel(1);
+    }
+
     function reset() {
       dt = 0;
       clearActions();
       clearBlocks();
       clearRows();
       clearScore();
+      clearLevel();
       setCurrentPiece(next);
       setNextPiece();
     }
@@ -340,13 +412,14 @@
         }
         if (complete) {
           removeLine(y);
-          y = y + 1; // recheck same line
+          y = y + 1;
           n++;
         }
       }
       if (n > 0) {
         addRows(n);
-        addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
+        addScore(100*Math.pow(2,n-1));
+        updateLevel(n);
       }
     }
 
@@ -367,16 +440,18 @@
     function invalidate()         { invalid.court  = true; }
     function invalidateNext()     { invalid.next   = true; }
     function invalidateScore()    { invalid.score  = true; }
-    function invalidateRows()     { invalid.rows   = true; }
+    function invalidateLevel()    { invalid.level  = true; }
+    function invalidateLevelProgress() { invalid.levelProgress = true; }
 
     function draw() {
       ctx.save();
       ctx.lineWidth = 1;
-      ctx.translate(0.5, 0.5); // for crisp 1px black lines
+      ctx.translate(0.5, 0.5);
       drawCourt();
       drawNext();
       drawScore();
-      drawRows();
+      drawLevel();
+      drawLevelProgress();
       ctx.restore();
     }
 
@@ -418,10 +493,30 @@
       }
     }
 
-    function drawRows() {
-      if (invalid.rows) {
-        html('rows', rows);
-        invalid.rows = false;
+    function drawLevel() {
+      if (invalid.level) {
+        html('level', level);
+        invalid.level = false;
+      }
+    }
+
+    function drawLevelProgress() {
+      if (invalid.levelProgress) {
+        var rowsToNext = getRowsToNextLevel();
+        var progressPercent = ((LEVEL_UP_ROWS - rowsToNext) / LEVEL_UP_ROWS) * 100;
+        if (level >= MAX_LEVEL) {
+          progressPercent = 100;
+          rowsToNext = 0;
+        }
+        var progressFill = get('level-progress-fill');
+        var progressText = get('level-progress-text');
+        progressFill.style.width = progressPercent + '%';
+        if (level >= MAX_LEVEL) {
+          progressText.innerHTML = 'MAX LEVEL!';
+        } else {
+          progressText.innerHTML = 'Next level: ' + rowsToNext + ' rows';
+        }
+        invalid.levelProgress = false;
       }
     }
 
