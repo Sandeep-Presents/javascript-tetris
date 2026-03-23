@@ -14,6 +14,32 @@
     #score    { color: red; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
+    #level-area { margin-top: 1em; padding: 0.5em; background-color: #f0f0f0; border-radius: 5px; text-align: center; }
+    #level-display { font-size: 1.5em; font-weight: bold; color: #333; margin-bottom: 0.3em; }
+    #level-progress-container { width: 100%; height: 10px; background-color: #ddd; border-radius: 5px; overflow: hidden; margin: 0.3em 0; }
+    #level-progress-bar { height: 100%; background-color: #4CAF50; transition: width 0.3s ease; }
+    #level-remaining { font-size: 0.8em; color: #666; }
+    #level-up-notification {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 1.5em 2em;
+      border-radius: 10px;
+      font-size: 1.5em;
+      font-weight: bold;
+      z-index: 10000;
+      display: none;
+      animation: fadeInOut 1.5s ease;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
     @media screen and (min-width:   0px) and (min-height:   0px)  { #tetris { font-size: 0.75em; width: 250px; } #menu { width: 100px; height: 200px; } #upcoming { width:  50px; height:  50px; } #canvas { width: 100px; height: 200px; } } /* 10px chunks */
     @media screen and (min-width: 400px) and (min-height: 400px)  { #tetris { font-size: 1.00em; width: 350px; } #menu { width: 150px; height: 300px; } #upcoming { width:  75px; height:  75px; } #canvas { width: 150px; height: 300px; } } /* 15px chunks */
     @media screen and (min-width: 500px) and (min-height: 500px)  { #tetris { font-size: 1.25em; width: 450px; } #menu { width: 200px; height: 400px; } #upcoming { width: 100px; height: 100px; } #canvas { width: 200px; height: 400px; } } /* 20px chunks */
@@ -32,7 +58,15 @@
       <p><canvas id="upcoming"></canvas></p>
       <p>score <span id="score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
+      <div id="level-area">
+        <div id="level-display">等级：1</div>
+        <div id="level-progress-container">
+          <div id="level-progress-bar" style="width: 0%"></div>
+        </div>
+        <div id="level-remaining">距离下一级还需消除 10 行</div>
+      </div>
     </div>
+    <div id="level-up-notification"></div>
     <canvas id="canvas">
       Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
     </canvas>
@@ -75,10 +109,21 @@
         ctx     = canvas.getContext('2d'),
         ucanvas = get('upcoming'),
         uctx    = ucanvas.getContext('2d'),
-        speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
+
+    //-------------------------------------------------------------------------
+    // level system constants
+    //-------------------------------------------------------------------------
+    var LEVEL_CONFIG = {
+      INITIAL_LEVEL: 1,        // 初始等级
+      MAX_LEVEL: 10,           // 等级上限
+      ROWS_PER_LEVEL: 10,      // 每级需要消除的行数
+      BASE_FALL_SPEED: 800,    // 1级基础下落速度（毫秒/格）
+      SPEED_DECREMENT: 80,     // 每级减少的速度（毫秒）
+      MIN_FALL_SPEED: 50       // 最低下落间隔（毫秒）
+    };
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -94,7 +139,9 @@
         score,         // the current score
         vscore,        // the currently displayed score (it catches up to score in small chunks - like a spinning slot machine)
         rows,          // number of completed rows in the current game
-        step;          // how long before current piece drops by 1 row
+        step,          // how long before current piece drops by 1 row
+        level,         // current level (1-10)
+        totalRows;     // total rows cleared (used for level calculation)
 
     //-------------------------------------------------------------------------
     // tetris pieces
@@ -243,8 +290,102 @@
     function addScore(n)            { score = score + n;   }
     function clearScore()           { setScore(0); }
     function clearRows()            { setRows(0); }
-    function setRows(n)             { rows = n; step = Math.max(speed.min, speed.start - (speed.decrement*rows)); invalidateRows(); }
+    function setRows(n)             { rows = n; invalidateRows(); }
     function addRows(n)             { setRows(rows + n); }
+
+    /**
+     * 计算当前等级对应的下落速度
+     * 根据等级配置计算下落间隔时间（秒）
+     * @param {number} currentLevel - 当前等级
+     * @returns {number} 下落间隔时间（秒）
+     */
+    function calculateFallSpeed(currentLevel) {
+      var speedMs = LEVEL_CONFIG.BASE_FALL_SPEED - (currentLevel - 1) * LEVEL_CONFIG.SPEED_DECREMENT;
+      speedMs = Math.max(speedMs, LEVEL_CONFIG.MIN_FALL_SPEED);
+      return speedMs / 1000; // 转换为秒
+    }
+
+    /**
+     * 更新等级系统
+     * 根据累计消除行数计算当前等级，并在等级提升时显示提示
+     */
+    function updateLevel() {
+      var oldLevel = level;
+      // 计算当前等级：每消除 ROWS_PER_LEVEL 行升一级
+      level = Math.min(
+        LEVEL_CONFIG.MAX_LEVEL,
+        LEVEL_CONFIG.INITIAL_LEVEL + Math.floor(totalRows / LEVEL_CONFIG.ROWS_PER_LEVEL)
+      );
+
+      // 更新下落速度
+      step = calculateFallSpeed(level);
+
+      // 如果等级提升，显示提示
+      if (level > oldLevel) {
+        showLevelUpNotification(oldLevel, level);
+      }
+
+      // 更新等级显示
+      updateLevelDisplay();
+    }
+
+    /**
+     * 显示等级提升提示
+     * 在游戏界面中央弹出半透明提示框，持续1.5秒后自动消失
+     * @param {number} oldLevel - 原等级
+     * @param {number} newLevel - 新等级
+     */
+    function showLevelUpNotification(oldLevel, newLevel) {
+      var notification = get('level-up-notification');
+      notification.innerHTML = '等级提升！Lv' + oldLevel + '→Lv' + newLevel;
+      notification.style.display = 'block';
+
+      // 强制重启动画
+      notification.style.animation = 'none';
+      notification.offsetHeight; // 触发重排
+      notification.style.animation = 'fadeInOut 1.5s ease';
+
+      // 1.5秒后隐藏
+      setTimeout(function() {
+        notification.style.display = 'none';
+      }, 1500);
+    }
+
+    /**
+     * 更新等级区域显示
+     * 更新等级数字、进度条和剩余行数提示
+     */
+    function updateLevelDisplay() {
+      // 更新等级显示
+      html('level-display', '等级：' + level);
+
+      // 计算当前等级进度
+      var rowsInCurrentLevel = totalRows % LEVEL_CONFIG.ROWS_PER_LEVEL;
+      var rowsNeeded = LEVEL_CONFIG.ROWS_PER_LEVEL - rowsInCurrentLevel;
+      var progressPercent = (rowsInCurrentLevel / LEVEL_CONFIG.ROWS_PER_LEVEL) * 100;
+
+      // 更新进度条
+      get('level-progress-bar').style.width = progressPercent + '%';
+
+      // 更新剩余行数提示
+      if (level >= LEVEL_CONFIG.MAX_LEVEL) {
+        html('level-remaining', '已达到最高等级！');
+        get('level-progress-bar').style.width = '100%';
+      } else {
+        html('level-remaining', '距离下一级还需消除 ' + rowsNeeded + ' 行');
+      }
+    }
+
+    /**
+     * 初始化等级系统
+     * 在游戏重置时调用，将等级和累计行数清零
+     */
+    function initLevel() {
+      level = LEVEL_CONFIG.INITIAL_LEVEL;
+      totalRows = 0;
+      step = calculateFallSpeed(level);
+      updateLevelDisplay();
+    }
     function getBlock(x,y)          { return (blocks && blocks[x] ? blocks[x][y] : null); }
     function setBlock(x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); }
     function clearBlocks()          { blocks = []; invalidate(); }
@@ -258,6 +399,7 @@
       clearBlocks();
       clearRows();
       clearScore();
+      initLevel(); // 初始化等级系统
       setCurrentPiece(next);
       setNextPiece();
     }
@@ -347,6 +489,8 @@
       if (n > 0) {
         addRows(n);
         addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
+        totalRows += n; // 更新累计消除行数
+        updateLevel();  // 更新等级系统
       }
     }
 
